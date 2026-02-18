@@ -9,13 +9,11 @@ class StudentController extends Controller
 {
     public function search(Request $request)
     {
-        $nama = $request->query('nama');
         $nim = $request->query('nim');
+        $nama = $request->query('nama');
         $ymd = $request->query('ymd');
 
-        $response = Http::get(
-            'https://ogienurdiana.com/career/ecc694ce4e7f6e45a5a7912cde9fe131'
-        );
+        $response = Http::get('https://ogienurdiana.com/career/ecc694ce4e7f6e45a5a7912cde9fe131');
 
         if (!$response->successful()) {
             return response()->json([
@@ -27,25 +25,33 @@ class StudentController extends Controller
 
         $lines = explode("\n", trim($rawData));
         
-        array_shift($lines);
+        $headerLine = array_shift($lines);
+        $headers = array_map('strtoupper', explode('|', $headerLine));
         
         $results = [];
 
-        foreach ($lines as $line) {
-            [$YMD, $NAMA, $NIM] = explode('|', $line);
+        foreach ($lines as $line)
+        {
+            $columns = explode('|', $line);
 
+            $row = array_combine($headers, $columns);
+
+            $NIM = $row['NIM'] ?? null;
+            $NAMA = $row['NAMA'] ?? null;
+            $YMD = $row['YMD'] ?? null;
+            
             if (
-                ($nama && strcasecmp($NAMA, $nama) !== 0) ||
                 ($nim && $NIM !== $nim) ||
+                ($nama && strcasecmp($NAMA, $nama) !== 0) ||
                 ($ymd && $YMD !== $ymd)
             ) {
                 continue;
             }
 
             $results[] = [
-                'YMD' => $YMD,
-                'NAMA' => $NAMA,
                 'NIM' => $NIM,
+                'NAMA' => $NAMA,
+                'YMD' => $YMD,
             ];
         }
 
